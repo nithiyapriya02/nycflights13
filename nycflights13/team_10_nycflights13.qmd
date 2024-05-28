@@ -1,15 +1,21 @@
+
 # Task 1: Establishing a Productive Software development environment for the Project
+
+![Task 1.1](img1.jpeg)
+![Task 1.2](img2.jpeg)
+
+![Task 1.3](img3.png)
 
 ```{r}
 #| include: false
 library(DBI)
 library(knitr)
 
-con <- dbConnect(odbc::odbc(), dsn="nycflights13", timeout = 10)
+con_nycflights13 <- dbConnect(odbc::odbc(), dsn="nycflights13", timeout = 10)
 ```
 
 ```{sql}
-#| connection: con
+#| connection: con_nycflights13
 
 /* Import table for planes
 Complete the missing code here
@@ -36,7 +42,7 @@ CSV HEADER;
 # Task 2: Aggregating Information from the 'flights' Table
 
 ```{sql}
-#| connection: con
+#| connection: con_nycflights13
 SELECT 
     a.origin AS "Three-letter airport code", 
     ap.name AS "Airport name", 
@@ -54,7 +60,7 @@ ORDER BY
 ```
 
 ```{sql}
-#| connection: con
+#| connection: con_nycflights13
 SELECT 
     f.dest AS "Three-letter airport code", 
     ap.name AS "Airport name", 
@@ -74,7 +80,7 @@ LIMIT 10;
 ```
 
 ```{sql}
-#| connection: con
+#| connection: con_nycflights13
 SELECT 
     f.origin AS "Three-letter airport code", 
     ap.name AS "Airport name", 
@@ -92,7 +98,7 @@ ORDER BY
 ```
 
 ```{sql}
-#| connection: con
+#| connection: con_nycflights13
 SELECT 
     f.hour AS "Hour of the day", 
     ROUND(
@@ -109,7 +115,7 @@ ORDER BY
 
 
 ```{sql}
-#| connection: con
+#| connection: con_nycflights13
 SELECT 
     f.tailnum AS "Tail number", 
     p.manufacturer AS "Manufacturer", 
@@ -131,7 +137,7 @@ ORDER BY
 # Task 3: Exploring Flights from New York City to Chicago
 
 ```{sql}
-#| connection: con
+#| connection: con_nycflights13
 CREATE OR REPLACE VIEW chicago_airports AS
 SELECT 
     faa, 
@@ -145,7 +151,7 @@ WHERE
 
 
 ```{sql}
-#| connection: con
+#| connection: con_nycflights13
 SELECT 
     f.dest AS "Three-letter code of the destination airport", 
     a.name AS "Name of the destination airport", 
@@ -168,7 +174,7 @@ ORDER BY
 
 
 ```{sql}
-#| connection: con
+#| connection: con_nycflights13
 
 SELECT 
     f.carrier AS "Two-letter airline code", 
@@ -191,7 +197,7 @@ ORDER BY
 
 
 ```{sql}
-#| connection: con
+#| connection: con_nycflights13
 SELECT 
     f.carrier AS "Two-letter airline code", 
     al.name AS "Airline name",
@@ -221,7 +227,7 @@ ORDER BY
 
 
 ```{sql}
-#| connection: con
+#| connection: con_nycflights13
 SELECT 
     CASE 
         WHEN COUNT(*) = 365 THEN 'TRUE'
@@ -243,7 +249,7 @@ FROM (
 # Task 4: Uncovering Associations between Weather and Flight Operations
 
 ```{sql}
-#| connection: con
+#| connection: con_nycflights13
 SELECT 
     COUNT(*) AS "Count of missing combinations"
 FROM 
@@ -259,7 +265,7 @@ WHERE
 
 
 ```{sql}
-#| connection: con
+#| connection: con_nycflights13
 SELECT 
     f.origin AS "Three-letter airport code", 
     a.name AS "Airport name",
@@ -284,7 +290,7 @@ ORDER BY
 
 
 ```{sql}
-#| connection: con
+#| connection: con_nycflights13
 SELECT 
     f.origin AS "Three-letter airport code", 
     a.name AS "Airport name",
@@ -309,7 +315,7 @@ ORDER BY
 
 
 ```{sql}
-#| connection: con
+#| connection: con_nycflights13
 SELECT 
     ROUND(CAST(CORR(avg_temp, avg_dep_delay) AS NUMERIC), 2) AS "Correlation coefficient"
 FROM (
@@ -330,7 +336,7 @@ FROM (
 
 
 ```{sql}
-#| connection: con
+#| connection: con_nycflights13
 SELECT 
     CASE 
         WHEN w.wind_dir BETWEEN 135 AND 225 THEN 'South'
