@@ -1,9 +1,10 @@
+# Task 1: Establishing a Productive Software development environment for the Project
 
 ```{r}
 #| include: false
 library(DBI)
 library(knitr)
-library(odbc)
+
 con <- dbConnect(odbc::odbc(), dsn="nycflights13", timeout = 10)
 ```
 
@@ -32,6 +33,7 @@ FROM '/tmp/nycflights/airports.csv'
 CSV HEADER;
 ```
 
+# Task 2: Aggregating Information from the 'flights' Table
 
 ```{sql}
 #| connection: con
@@ -52,7 +54,6 @@ ORDER BY
 ```
 
 ```{sql}
-/* Which ten destination airports are served by the greatest number of seats from New York City? */
 #| connection: con
 SELECT 
     f.dest AS "Three-letter airport code", 
@@ -127,7 +128,8 @@ ORDER BY
 ```    
     
     
-    
+# Task 3: Exploring Flights from New York City to Chicago
+
 ```{sql}
 #| connection: con
 CREATE OR REPLACE VIEW chicago_airports AS
@@ -238,8 +240,7 @@ FROM (
 ``` 
 
 
-
-
+# Task 4: Uncovering Associations between Weather and Flight Operations
 
 ```{sql}
 #| connection: con
@@ -349,11 +350,5 @@ GROUP BY
 
 
 
-```{sql}
-#| connection: con
-
-
-``` 
-    
     
     
