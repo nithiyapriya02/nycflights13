@@ -1,8 +1,9 @@
 
 ```{r}
 #| include: false
-
 library(DBI)
+library(knitr)
+library(odbc)
 con <- dbConnect(odbc::odbc(), dsn="nycflights13", timeout = 10)
 ```
 
@@ -34,8 +35,6 @@ CSV HEADER;
 
 ```{sql}
 #| connection: con
-/* Ranking New York City’s Main Airports by Number of Destinations Served*/
-
 SELECT 
     a.origin AS "Three-letter airport code", 
     ap.name AS "Airport name", 
@@ -131,7 +130,7 @@ ORDER BY
     
 ```{sql}
 #| connection: con
-CREATE VIEW chicago_airports AS
+CREATE OR REPLACE VIEW chicago_airports AS
 SELECT 
     faa, 
     name
@@ -244,8 +243,14 @@ FROM (
 
 ```{sql}
 #| connection: con
-
-
+SELECT 
+    COUNT(*) AS "Count of missing combinations"
+FROM 
+    flights f
+LEFT JOIN 
+    weather w ON f.origin = w.origin AND f.time_hour = w.time_hour
+WHERE 
+    w.origin IS NULL;
 ``` 
 
 
@@ -254,7 +259,48 @@ FROM (
 
 ```{sql}
 #| connection: con
+SELECT 
+    f.origin AS "Three-letter airport code", 
+    a.name AS "Airport name",
+    CASE WHEN w.precip = 0 THEN TRUE ELSE FALSE END AS is_dry,
+    ROUND(
+        (SUM(CASE WHEN f.dep_delay <= 0 THEN 1 ELSE 0 END) * 100.0) / COUNT(*), 
+        2
+    ) AS "Percentage of on-time departures"
+FROM 
+    flights f
+INNER JOIN 
+    weather w ON f.origin = w.origin AND f.time_hour = w.time_hour
+INNER JOIN 
+    airports a ON f.origin = a.faa
+GROUP BY 
+    f.origin, a.name, is_dry
+ORDER BY 
+    f.origin, is_dry;
+``` 
 
+
+
+
+```{sql}
+#| connection: con
+SELECT 
+    f.origin AS "Three-letter airport code", 
+    a.name AS "Airport name",
+    ROUND(AVG(f.dep_delay), 2) AS "Mean departure delay in minutes",
+    RANK() OVER (ORDER BY AVG(f.dep_delay)) AS "Rank"
+FROM 
+    flights f
+INNER JOIN 
+    weather w ON f.origin = w.origin AND f.time_hour = w.time_hour
+INNER JOIN 
+    airports a ON f.origin = a.faa
+WHERE 
+    w.visib < 1
+GROUP BY 
+    f.origin, a.name
+ORDER BY 
+    "Rank", "Three-letter airport code";
 
 ``` 
 
@@ -263,8 +309,20 @@ FROM (
 
 ```{sql}
 #| connection: con
-
-
+SELECT 
+    ROUND(CAST(CORR(avg_temp, avg_dep_delay) AS NUMERIC), 2) AS "Correlation coefficient"
+FROM (
+    SELECT 
+        DATE(f.time_hour) AS flight_date,
+        AVG(w.temp) AS avg_temp,
+        AVG(f.dep_delay) AS avg_dep_delay
+    FROM 
+        flights f
+    INNER JOIN 
+        weather w ON f.origin = w.origin AND f.time_hour = w.time_hour
+    GROUP BY 
+        DATE(f.time_hour)
+) AS daily_stats;
 ``` 
 
 
@@ -272,17 +330,21 @@ FROM (
 
 ```{sql}
 #| connection: con
-
-
-``` 
-
-
-
-
-```{sql}
-#| connection: con
-
-
+SELECT 
+    CASE 
+        WHEN w.wind_dir BETWEEN 135 AND 225 THEN 'South'
+        WHEN w.wind_dir BETWEEN 0 AND 45 OR w.wind_dir BETWEEN 315 AND 360 THEN 'North'
+    END AS wind_direction,
+    ROUND(AVG(f.air_time), 2) AS mean_air_time
+FROM 
+    flights f
+INNER JOIN 
+    weather w ON f.origin = w.origin AND f.time_hour = w.time_hour
+WHERE 
+    f.dest = 'BTV'
+    AND (w.wind_dir BETWEEN 135 AND 225 OR w.wind_dir BETWEEN 0 AND 45 OR w.wind_dir BETWEEN 315 AND 360)
+GROUP BY 
+    wind_direction;
 ``` 
 
 
