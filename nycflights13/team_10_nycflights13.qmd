@@ -1,0 +1,229 @@
+
+```{r}
+#| include: false
+
+library(DBI)
+con <- dbConnect(odbc::odbc(), dsn="nycflights13", timeout = 10)
+```
+
+```{sql}
+#| connection: con
+
+/* Import table for planes
+Complete the missing code here
+Submit the missing code only in your report */
+
+DROP TABLE IF EXISTS planes CASCADE;
+CREATE TABLE planes (
+    tailnum VARCHAR(6),
+    year INT,
+    type VARCHAR(255),
+    manufacturer VARCHAR(255),
+    model VARCHAR(255),
+    engines INT,
+    seats INT,
+    speed INT,
+    engine VARCHAR(255),
+    PRIMARY KEY (tailnum)
+);
+COPY planes
+FROM '/tmp/nycflights/planes.csv'
+CSV HEADER;
+```
+
+
+```{sql}
+#| connection: con
+/* Ranking New York City’s Main Airports by Number of Destinations Served*/
+
+SELECT 
+    a.origin AS "Three-letter airport code", 
+    ap.name AS "Airport name", 
+    COUNT(DISTINCT a.dest) AS "Number of destinations",
+    RANK() OVER (ORDER BY COUNT(DISTINCT a.dest) DESC) AS "Rank"
+FROM 
+    flights AS a
+INNER JOIN 
+    airports AS ap ON a.origin = ap.faa
+GROUP BY 
+    a.origin, ap.name
+ORDER BY 
+    "Rank", "Three-letter airport code";
+
+```
+
+```{sql}
+/* Which ten destination airports are served by the greatest number of seats from New York City? */
+#| connection: con
+SELECT 
+    f.dest AS "Three-letter airport code", 
+    ap.name AS "Airport name", 
+    SUM(pl.seats) AS "Number of seats",
+    RANK() OVER (ORDER BY SUM(pl.seats) DESC) AS "Rank"
+FROM 
+    flights AS f
+INNER JOIN 
+    planes AS pl ON f.tailnum = pl.tailnum
+INNER JOIN 
+    airports AS ap ON f.dest = ap.faa
+GROUP BY 
+    f.dest, ap.name
+ORDER BY 
+    "Rank", "Three-letter airport code"
+LIMIT 10;
+```
+
+```{sql}
+#| connection: con
+SELECT 
+    f.origin AS "Three-letter airport code", 
+    ap.name AS "Airport name", 
+    ROUND(AVG(f.dep_delay), 2) AS "Mean departure delay in minutes",
+    RANK() OVER (ORDER BY AVG(f.dep_delay) DESC) AS "Rank"
+FROM 
+    flights AS f
+INNER JOIN 
+    airports AS ap ON f.origin = ap.faa
+GROUP BY 
+    f.origin, ap.name
+ORDER BY 
+    "Rank", "Three-letter airport code";
+
+```
+
+```{sql}
+#| connection: con
+SELECT 
+    f.hour AS "Hour of the day", 
+    ROUND(
+        (SUM(CASE WHEN f.dep_delay <= 0 THEN 1 ELSE 0 END) * 100.0) / COUNT(*), 
+        2
+    ) AS "Percentage of on-time departures"
+FROM 
+    flights AS f
+GROUP BY 
+    f.hour
+ORDER BY 
+    f.hour;
+```
+
+
+```{sql}
+#| connection: con
+SELECT 
+    f.tailnum AS "Tail number", 
+    p.manufacturer AS "Manufacturer", 
+    p.model AS "Model",
+    COUNT(DISTINCT f.carrier) AS "Number of airlines"
+FROM 
+    flights AS f
+INNER JOIN 
+    planes AS p ON f.tailnum = p.tailnum
+GROUP BY 
+    f.tailnum, p.manufacturer, p.model
+HAVING 
+    COUNT(DISTINCT f.carrier) > 1
+ORDER BY 
+    f.tailnum;
+```    
+    
+    
+    
+```{sql}
+#| connection: con
+
+
+``` 
+
+
+
+```{sql}
+#| connection: con
+
+
+``` 
+
+
+
+
+```{sql}
+#| connection: con
+
+
+``` 
+
+
+
+
+```{sql}
+#| connection: con
+
+
+``` 
+
+
+
+
+```{sql}
+#| connection: con
+
+
+``` 
+
+
+
+
+
+```{sql}
+#| connection: con
+
+
+``` 
+
+
+
+
+
+```{sql}
+#| connection: con
+
+
+``` 
+
+
+
+
+```{sql}
+#| connection: con
+
+
+``` 
+
+
+
+
+```{sql}
+#| connection: con
+
+
+``` 
+
+
+
+
+```{sql}
+#| connection: con
+
+
+``` 
+
+
+
+```{sql}
+#| connection: con
+
+
+``` 
+    
+    
+    
