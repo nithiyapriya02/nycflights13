@@ -13,21 +13,21 @@ con <- dbConnect(odbc::odbc(), dsn="nycflights13", timeout = 10)
 Complete the missing code here
 Submit the missing code only in your report */
 
-DROP TABLE IF EXISTS planes CASCADE;
-CREATE TABLE planes (
-    tailnum VARCHAR(6),
-    year INT,
-    type VARCHAR(255),
-    manufacturer VARCHAR(255),
-    model VARCHAR(255),
-    engines INT,
-    seats INT,
-    speed INT,
-    engine VARCHAR(255),
-    PRIMARY KEY (tailnum)
+-- Import table for airports
+DROP TABLE IF EXISTS airports CASCADE;
+CREATE TABLE airports (
+    faa CHAR(3),
+    name VARCHAR(255),
+    lat NUMERIC,
+    lon NUMERIC,
+    alt INT,
+    tz INT,
+    dst CHAR(1),
+    tzone VARCHAR(255),
+    PRIMARY KEY (faa)
 );
-COPY planes
-FROM '/tmp/nycflights/planes.csv'
+COPY airports
+FROM '/tmp/nycflights/airports.csv'
 CSV HEADER;
 ```
 
@@ -131,33 +131,35 @@ ORDER BY
     
 ```{sql}
 #| connection: con
-
-
+CREATE VIEW chicago_airports AS
+SELECT 
+    faa, 
+    name
+FROM 
+    airports
+WHERE 
+    name ILIKE '%Chicago%';
 ``` 
 
 
 
 ```{sql}
 #| connection: con
-
-
-``` 
-
-
-
-
-```{sql}
-#| connection: con
-
-
-``` 
-
-
-
-
-```{sql}
-#| connection: con
-
+SELECT 
+    f.dest AS "Three-letter code of the destination airport", 
+    a.name AS "Name of the destination airport", 
+    COUNT(*) AS "Number of flights",
+    RANK() OVER (ORDER BY COUNT(*) DESC) AS "Rank"
+FROM 
+    flights AS f
+INNER JOIN 
+    airports AS a ON f.dest = a.faa
+WHERE 
+    f.dest IN (SELECT faa FROM chicago_airports)
+GROUP BY 
+    f.dest, a.name
+ORDER BY 
+    "Rank", "Three-letter code of the destination airport";
 
 ``` 
 
@@ -167,7 +169,73 @@ ORDER BY
 ```{sql}
 #| connection: con
 
+SELECT 
+    f.carrier AS "Two-letter airline code", 
+    al.name AS "Airline name", 
+    COUNT(*) AS "Number of flights",
+    RANK() OVER (ORDER BY COUNT(*) DESC) AS "Rank"
+FROM 
+    flights AS f
+INNER JOIN 
+    airlines AS al ON f.carrier = al.carrier
+WHERE 
+    f.dest IN (SELECT faa FROM chicago_airports)
+GROUP BY 
+    f.carrier, al.name
+ORDER BY 
+    "Rank", "Two-letter airline code";
+``` 
 
+
+
+
+```{sql}
+#| connection: con
+SELECT 
+    f.carrier AS "Two-letter airline code", 
+    al.name AS "Airline name",
+    ROUND(
+        (SUM(CASE WHEN f.arr_delay <= 0 THEN 1 ELSE 0 END) * 100.0) / COUNT(*), 
+        2
+    ) AS "Percentage of on-time arrivals",
+    RANK() OVER (ORDER BY ROUND(
+        (SUM(CASE WHEN f.arr_delay <= 0 THEN 1 ELSE 0 END) * 100.0) / COUNT(*), 
+        2
+    ) DESC) AS "Rank"
+FROM 
+    flights AS f
+INNER JOIN 
+    airlines AS al ON f.carrier = al.carrier
+WHERE 
+    f.dest IN (SELECT faa FROM chicago_airports)
+GROUP BY 
+    f.carrier, al.name
+HAVING 
+    COUNT(*) >= 100
+ORDER BY 
+    "Rank", "Two-letter airline code";
+``` 
+
+
+
+
+```{sql}
+#| connection: con
+SELECT 
+    CASE 
+        WHEN COUNT(*) = 365 THEN 'TRUE'
+        ELSE 'FALSE'
+    END AS "Was at least one departure from New York City to Chicago scheduled every day in 2013?"
+FROM (
+    SELECT 
+        year, month, day
+    FROM 
+        flights
+    WHERE 
+        dest IN (SELECT faa FROM chicago_airports)
+    GROUP BY 
+        year, month, day
+) AS daily_flights;
 ``` 
 
 
